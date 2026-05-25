@@ -1,0 +1,19 @@
+# Dependencies
+venv/
+
+# Environment
+.env
+
+# Credentials (never commit)
+credentials.json
+
+# Database
+*.db
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
