@@ -87,7 +87,11 @@ python db/model.py
 ### 5. Run the API
 
 ```bash
-uvicorn main:app --reload
+# Development (hot reload)
+fastapi dev main.py
+
+# Production
+fastapi run main.py
 ```
 
 API docs available at `http://localhost:8000/docs`.
