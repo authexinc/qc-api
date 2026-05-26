@@ -17,3 +17,16 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+
+# Test
+test_logs.py
+test1.py
+test2.py
+tv_data.py
+
+test1-logs.json
+good_logs.json
+final-logs.json
+
+notes.md

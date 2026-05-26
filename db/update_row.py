@@ -1,4 +1,4 @@
-from .model import Session, ChartData
+from .model import Session, ChartData, AlgoState
 import datetime
 
 
@@ -62,8 +62,8 @@ def populate_algo_state(datetime_: datetime.datetime, state_: str, gap_: str, st
     session = Session()
 
     try:
-        new_row = ChartData(datetime=datetime_, state=state_, gap=gap_, strategy=strategy_,
-                            cmte_type=cmte_type_, cmte_val=cmte_val_, next_mte=next_mte_, next_mte_val=next_mte_val_,
+        new_row = AlgoState(datetime=datetime_, state=state_, gap=gap_, strategy=strategy_,
+                            current_mte_type=cmte_type_, current_mte_val=cmte_val_, next_mte=next_mte_, next_mte_val=next_mte_val_,
                             current_bie_val=current_bie_val_, main_flow_state=main_flow_state_, highest_sl_ema_type=highest_sl_ema_type_,
                             highest_sl_ema_val=highest_sl_ema_val_, one_min_high_val=one_min_high_val_, one_min_high_G=one_min_high_G_,
                             debs_main_buy_ok=debs_main_buy_ok_, debs_main_sell_ok=debs_main_sell_ok_, ema2min_buy_state=ema2min_buy_state_,

@@ -1,5 +1,5 @@
 # import sqlalchemy
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import os
 from dotenv import load_dotenv
@@ -14,7 +14,8 @@ class ChartData(Base):
     __tablename__ = 'chart_values'
 
     id = Column(Integer, primary_key=True)
-    datetime = Column(DateTime)
+    datetime = Column(DateTime, unique=True)
+    algo_state = relationship("AlgoState", back_populates="chart_data", uselist=False)
 
     # ------ OHLCv Data ------
     open = Column(Float)
@@ -80,8 +81,9 @@ class AlgoState(Base):
     __tablename__ = 'algo_state'
     
     id = Column(Integer, primary_key=True)
-    date = Column(DateTime)
-    
+    datetime = Column(DateTime, ForeignKey('chart_values.datetime'))
+    chart_data = relationship("ChartData", back_populates="algo_state")
+
     state = Column(String(250))
     gap = Column(String(250))
     strategy = Column(String(250))

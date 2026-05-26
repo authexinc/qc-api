@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 import os
 import datetime as dt
 import db.update_row as ur
-
+from db.model import ChartData, Session, AlgoState
+from sqlalchemy import select
 
 load_dotenv()
 
@@ -111,6 +112,13 @@ def add_to_db():
 
     date, values, state = parse_data()
 
+    session = Session()
+    existing = session.execute(select(ChartData).where(ChartData.datetime == date)).scalar_one_or_none()
+    session.close()
+    if existing:
+        logging.info(f"Skipping duplicate row for {date}")
+        return
+
     ur.populate_chart(date, float(values.get('Open')), float(values.get(
         'High')), float(values.get('Low')), float(values.get('Close')), int(values.get('Volume')),
         float(values.get('EMA_1min')), float(
@@ -163,8 +171,27 @@ def add_to_db():
     # Need a table for state information and link by timestamp
 
 
-def chart_log_data():
-    pass
+def chart_log_data() -> list[dict]:
+    session = Session()
+    rows = session.execute(select(ChartData).order_by(ChartData.datetime)).scalars().all()
+    result = []
+    for row in rows:
+        d = {col.name: getattr(row, col.name) for col in ChartData.__table__.columns}
+        d['time'] = int(d.pop('datetime').timestamp()) if d.get('datetime') else None
+        result.append(d)
+    return result
+
+
+def chart_status() -> list[dict]:
+    session = Session()
+    rows = session.execute(select(AlgoState).order_by(AlgoState.datetime)).scalars().all()
+    result = []
+    for row in rows:
+        d = {col.name: getattr(row, col.name) for col in AlgoState.__table__.columns}
+        d['datetime'] = d['datetime'].isoformat() if d.get('datetime') else None
+        result.append(d)
+    return result
+
 
 if __name__ == "__main__":
     # print(type(get_log_data()))
@@ -178,4 +205,5 @@ if __name__ == "__main__":
     # print(parse_data())
 
     # print(get_log())
-    add_to_db()
+    # add_to_db()
+    pass
