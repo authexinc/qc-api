@@ -27,6 +27,16 @@ def parse_log_data() -> dict:
     return ld.parse_data()
 
 
+@app.get('/live/chart')
+def chart_log_data():
+    return ld.chart_log_data()
+
+
+@app.get('/live/status')
+def chart_status():
+    return ld.chart_status()
+
+
 # -------- CSTE/CMTE Updates ----------
 
 # MTE Updates
