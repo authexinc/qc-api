@@ -5,7 +5,9 @@ A FastAPI service that bridges a live QuantConnect trading algorithm with extern
 ## What it does
 
 - **Fetches live logs** from the QuantConnect API and parses OHLCV, EMA indicator values, and algorithm state
-- **Persists bar data** to a PostgreSQL database (chart values + algo state per bar)
+- **Persists bar data** to a PostgreSQL database (chart values + algo state per bar, linked by datetime)
+- **Serves chart data** as Unix-timestamped JSON for TradingView Advanced Charts (via Grafana widget)
+- **Serves algorithm status** as ISO-timestamped JSON for Grafana dashboards
 - **Controls the live algorithm** — start, stop, and liquidate via REST endpoints
 - **Pushes parameter updates** to a Google Sheet that the algorithm reads each bar (MTE/STE overrides)
 
@@ -33,6 +35,8 @@ db/model.py  append_file/append.py
 |--------|------|-------------|
 | `GET` | `/live/log-data` | Raw log data from QuantConnect |
 | `GET` | `/live/parse` | Parsed log data (datetime, values, state) |
+| `GET` | `/live/chart` | All OHLCV + indicator rows as Unix-timestamped JSON (TradingView) |
+| `GET` | `/live/status` | All algo state rows as ISO-timestamped JSON (Grafana) |
 | `POST` | `/live/actions/update/mte/{mte}` | Set MTE override value |
 | `POST` | `/live/actions/clear/mte` | Clear MTE override |
 | `POST` | `/live/actions/update/ste/{ste}` | Set STE override value |

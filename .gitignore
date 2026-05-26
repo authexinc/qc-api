@@ -20,6 +20,7 @@ __pycache__/
 
 
 # Test
+/tests
 test_logs.py
 test1.py
 test2.py
