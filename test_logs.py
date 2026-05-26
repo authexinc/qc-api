@@ -1,2 +1,0 @@
-''"State: main_sell | Gap: idle | Strategy: vmtea | Current_MTE_Type: mte1 | Current_MTE_Val: $708.42 | Next_MTE: mte4_l5 | Next_MTE_Val: $696.27 | Current_BIE_Val: $708.42 | MainFlowState: two_min_60 | Highest_SL_EMA_Type: idle | Highest_SL_EMA_Val: None | One_Min_High: $721.35 | One_Min_High_G: None | DEBS_Main_Buy_OK: True | DEBS_Main_Sell_OK: True | EMA2min_Buy_State: above_bie_more_than_0_5 | EMA2min_Sell_State: idle | Gap_UP_EMA: $708.42 | Gap_Down_EMA: $718.75 | GBP: None | GSP: None | Invested: False"
-''
