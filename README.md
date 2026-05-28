@@ -4,7 +4,7 @@ A production-ready FastAPI service that bridges a live QuantConnect trading algo
 
 ---
 
-## 🚀 System Architecture
+## System Architecture
 
 ```
                        ┌─────────────────────────┐
@@ -35,7 +35,7 @@ A production-ready FastAPI service that bridges a live QuantConnect trading algo
 
 ---
 
-## 📋 Features
+## Features
 
 1. **Live Log Fetching & Parsing:** Pulls live QuantConnect execution logs, parsing complex trading status parameters, indicator calculations, and OHLCV bars in real-time.
 2. **Robust Storage:** Persists parsed bars into a native PostgreSQL instance with dual-table synchronization (`chart_values` for OHLCV & EMAs, `algo_state` for algorithm metadata) linked by datetime.
@@ -46,7 +46,7 @@ A production-ready FastAPI service that bridges a live QuantConnect trading algo
 
 ---
 
-## 🛠️ Complete REST Endpoints
+## Complete REST Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -64,7 +64,7 @@ A production-ready FastAPI service that bridges a live QuantConnect trading algo
 
 ---
 
-## 📦 File Structure
+## File Structure
 
 ```
 qc-api/
@@ -87,7 +87,7 @@ qc-api/
 
 ---
 
-## 💻 Local Setup & Development
+## Local Setup & Development
 
 ### 1. Clone & Environment Configuration
 Ensure Python 3.10+ is installed. Set up the virtual environment:
@@ -124,7 +124,7 @@ Your local FastAPI server will boot on port `8000`. You can test endpoints via `
 
 ---
 
-## ☁️ Production VPS Deployment
+## Production VPS Deployment
 
 For standard Linux VPS deployments where port `5432` and `8000` might have port conflicts (e.g. Docker platforms, Saleor installations, etc.), the production stack runs **FastAPI on Port 8002**, **PostgreSQL on Port 5433**, and proxies public traffic via **Nginx on Port 80**.
 
@@ -192,7 +192,7 @@ bash /qc-api/deploy.sh
 
 ---
 
-## 📊 Connecting to Grafana Cloud
+## Connecting to Grafana Cloud
 
 ### 1. Exposing the Database via PDC Agent
 Rather than exposing your PostgreSQL server port `5433` publicly, run our automated Grafana PDC installation script on the VPS. This downloads the official `pdc-agent` and runs it securely in the background via systemd:
