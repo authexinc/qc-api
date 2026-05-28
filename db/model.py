@@ -1,5 +1,5 @@
 # import sqlalchemy
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, ForeignKey
+from sqlalchemy import Boolean, create_engine, Column, Integer, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import os
 from dotenv import load_dotenv
@@ -97,15 +97,15 @@ class AlgoState(Base):
     highest_sl_ema_val = Column(Float)
     one_min_high_val = Column(Float)
     one_min_high_G = Column(Float)
-    debs_main_buy_ok = Column(String(250))
-    debs_main_sell_ok = Column(String(250))
+    debs_main_buy_ok = Column(Boolean)
+    debs_main_sell_ok = Column(Boolean)
     ema2min_buy_state = Column(String(250))
     ema2min_sell_state = Column(String(250))
     gap_up_ema = Column(Float)
     gap_down_ema = Column(Float)
     gbp = Column(Float)
     gsp = Column(Float)
-    invested = Column(String(250))
+    invested = Column(Boolean)
     
     
     

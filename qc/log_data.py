@@ -149,9 +149,9 @@ def add_to_db():
     str, cmte_type_: str, cmte_val_: float, next_mte_: str, next_mte_val_: float,
     current_bie_val_: float, main_flow_state_: str, highest_sl_ema_type_: str,
     highest_sl_ema_val_: float, one_min_high_val_: float, one_min_high_G_: float,
-    debs_main_buy_ok_: str, debs_main_sell_ok_: str, ema2min_buy_state_: str,
+    debs_main_buy_ok_: bool, debs_main_sell_ok_: bool, ema2min_buy_state_: str,
     ema2min_sell_state_: str, gap_up_ema_: float, gap_down_ema_: float,
-    gbp_: float, gsp_: float, invested_: str
+    gbp_: float, gsp_: float, invested_: bool
     '''
 
     ur.populate_algo_state(
