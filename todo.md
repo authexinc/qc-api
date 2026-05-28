@@ -14,18 +14,18 @@ Create db file {cm:2026-05-25}
 
 TV DataFeed
 
-Every time log data is called, add values to db
+Every time log data is called, add values to db {cm:2026-05-28}
 
-Fix the log list index in parse_data() to capture all values
+Fix the log list index in parse_data() to capture all values {cm:2026-05-28}
 
-## For DB, need to convert datetime to proper datetime format and use that as the key
+## For DB, need to convert datetime to proper datetime format and use that as the key {cm:2026-05-28}
 
 For the output - JSON containing OHLC, ema values - JSON containing meta data like invested, p&l, equity, etc.
 
-Strip dollar sign from OHLC, MTE, EMAs, LTEs
+Strip dollar sign from OHLC, MTE, EMAs, LTEs {cm:2026-05-28}
 
-split the logs by "#"
+split the logs by "#" {cm:2026-05-28}
 
-Add a table for algo state and link using datetime
+Add a table for algo state and link using datetime {cm:2026-05-28}
 
-Add db append checks
+Add db append checks {cm:2026-05-28}
