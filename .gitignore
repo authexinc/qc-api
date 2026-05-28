@@ -26,6 +26,8 @@ test_logs.py
 test1.py
 test2.py
 tv_data.py
+test6.py
+test6-logs.json
 
 test1-logs.json
 good_logs.json
