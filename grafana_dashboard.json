@@ -1,0 +1,164 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "Live Trading Candlestick & Indicators (1-Min)",
+      "type": "candlestick",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  datetime AS \"time\",\n  open,\n  high,\n  low,\n  close,\n  volume,\n  ema_1min,\n  ema_middle\nFROM chart_values\nWHERE $__timeFilter(datetime)\nORDER BY datetime ASC",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "candle"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 0,
+        "y": 12
+      },
+      "id": 2,
+      "title": "Algorithm Live Metadata",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  datetime AS \"Time\",\n  state AS \"State\",\n  gap AS \"Gap\",\n  strategy AS \"Strategy\",\n  current_mte_type AS \"MTE Type\",\n  current_mte_val AS \"MTE Val\",\n  next_mte AS \"Next MTE\",\n  next_mte_val AS \"Next MTE Val\",\n  invested AS \"Invested Status\"\nFROM algo_state\nWHERE $__timeFilter(datetime)\nORDER BY datetime DESC\nLIMIT 50",
+          "refId": "A"
+        }
+      ],
+      "transformations": []
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 12
+      },
+      "id": 3,
+      "title": "Algorithm Action Panel",
+      "type": "volkovlabs-button-panel",
+      "options": {
+        "buttons": [
+          {
+            "title": "Start Algorithm",
+            "variant": "primary",
+            "url": "http://${VPS_IP}/live/actions/start",
+            "request": "POST",
+            "foregroundColor": "#ffffff",
+            "backgroundColor": "#1f78c1"
+          },
+          {
+            "title": "Liquidate Positions",
+            "variant": "destructive",
+            "url": "http://${VPS_IP}/live/actions/liquidate",
+            "request": "POST",
+            "foregroundColor": "#ffffff",
+            "backgroundColor": "#d1383d"
+          },
+          {
+            "title": "Stop Algorithm",
+            "variant": "secondary",
+            "url": "http://${VPS_IP}/live/actions/stop",
+            "request": "POST",
+            "foregroundColor": "#ffffff",
+            "backgroundColor": "#73bf69"
+          }
+        ]
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["quantconnect", "trading"],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "QuantConnect Trading Algorithm Live Dashboard",
+  "uid": "qc_trading_live",
+  "version": 1,
+  "weekStart": ""
+}

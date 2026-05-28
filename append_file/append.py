@@ -7,9 +7,15 @@ load_dotenv()
 
 class AppendValue():
     def __init__(self):
-        self.qc = gspread.oauth(credentials_filename='credentials.json')
-        self.sh = self.qc.open('QC_PARAM')
-        self.ws = self.sh.sheet1
+        self._ws = None
+
+    @property
+    def ws(self):
+        if self._ws is None:
+            self.qc = gspread.oauth(credentials_filename='credentials.json')
+            self.sh = self.qc.open('QC_PARAM')
+            self._ws = self.sh.sheet1
+        return self._ws
         
     # def get_file():
     #     ws.update_cell(1,1, {})
