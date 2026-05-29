@@ -90,12 +90,7 @@ def get_log() -> dict:
         if int_len > 200:
             startline = int_len - 200
         else:
-            try:
-                startline = (int_len / 2)
-            except:
-                if int_len == 0:
-                    logging.info("Not enough insights yet.")
-                    return 0, 0
+            startline = 0
 
         startline = int(startline)
 
@@ -135,16 +130,27 @@ def parse_data() -> list:
         def parse_state() -> dict:
             logs = [log.strip(" ") for log in state]
 
-            result = {item.split(':', 1)[0].strip(): item.split(":", 1)[
-                1].strip() for item in logs if ":" in item}
+            result = {}
+            for item in logs:
+                if ":" in item:
+                    k, v = item.split(":", 1)
+                    result[k.strip()] = v.strip()
+                elif item.startswith("EMA2min_Sell_State"):
+                    result["EMA2min_Sell_State"] = item[len("EMA2min_Sell_State"):].strip()
 
             return result
 
         def parse_values() -> dict:
             value_list = [value.strip(" ") for value in values]
 
-            result = {value.split(":", 1)[0].strip(): value.split(
-                ":", 1)[1].strip(" $") for value in value_list if ":" in value}
+            result = {}
+            for value in value_list:
+                if ":" in value:
+                    k, v = value.split(":", 1)
+                    result[k.strip()] = v.strip(" $")
+                elif "$" in value:
+                    k, v = value.split("$", 1)
+                    result[k.strip()] = v.strip()
 
             return result
 
@@ -175,7 +181,7 @@ def add_to_db():
         
         if existing:
             logging.info(f"Skipping duplicate row for {date}")
-            return
+            continue
 
         ur.populate_chart(
             date,
@@ -271,7 +277,7 @@ def chart_log_data() -> list[dict]:
 def chart_status() -> list[dict]:
     session = Session()
     rows = session.execute(select(AlgoState).order_by(
-        AlgoState.datetime)).scalars().all()
+        AlgoState.datetime.desc())).scalars().all()
     result = []
     for row in rows:
         d = {col.name: getattr(row, col.name)
