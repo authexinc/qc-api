@@ -14,7 +14,7 @@ class LiveUpdate():
         self.base_url = os.getenv('BASE_URL')
         self.node_id = None
 
-        self.brokerage_id = os.getenv('INERACTIVE_BROKERS_BROKERAGE_ID')
+        self.brokerage_id = os.getenv('INTERACTIVE_BROKERS_BROKERAGE_ID')
         self.ib_username = os.getenv('IBKR_USER_NAME')
         self.ib_account = os.getenv('IB_ACC_ID')
         self.ib_password = os.getenv('IB_PASSWORD')
