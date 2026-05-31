@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from qc import quantconnect, log_data
 from qc.algo_actions import LiveUpdate
 import append_file.append as ap
@@ -8,7 +9,7 @@ qc, ld = quantconnect, log_data
 
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None)
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,6 +18,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - Swagger UI",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_js_url="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui-bundle.js",
+        swagger_css_url="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui.css",
+    )
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc_html():
+    return get_redoc_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - ReDoc",
+        redoc_js_url="https://cdnjs.cloudflare.com/ajax/libs/redoc/2.1.3/redoc.standalone.js",
+    )
 
 live_update = AppendValue()
 lu = LiveUpdate()
@@ -73,7 +92,7 @@ def startup_event():
 
 @app.get("/live/log-data")
 def get_log_data():
-    return ld.get_log_data()
+    return ld.get_log()
 
 
 @app.get('/live/parse')
