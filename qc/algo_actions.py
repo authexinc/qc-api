@@ -2,9 +2,10 @@ from . import quantconnect as qc
 from requests import post
 import json
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 
 load_dotenv()
+path = '.env'
 
 class LiveUpdate():
     def __init__(self):
@@ -47,6 +48,22 @@ class LiveUpdate():
             result = response.json()
             compileId = result['compileId']
 
+            import time
+            for _ in range(30):
+                read_resp = post(
+                    f"{self.base_url}/compile/read",
+                    headers=qc.get_headers(),
+                    json={"projectId": self.project_id, "compileId": compileId}
+                ).json()
+                state = read_resp.get('state', '')
+                if state == 'BuildSuccess':
+                    break
+                if state == 'BuildError':
+                    raise RuntimeError(f"Compile failed: {read_resp.get('logs', '')}")
+                time.sleep(2)
+            else:
+                raise TimeoutError("Compile did not finish in time")
+
             return compileId
 
         self.compile_id = get_compile_id()
@@ -67,24 +84,24 @@ class LiveUpdate():
         node = node_id()
 
         payload = {
-            "versionId": -1,
+            "versionId": "-1",
             "projectId": self.project_id,
             "compileId": self.compile_id,
             "nodeId": node,
             'brokerage': {
                 "id": self.brokerage_id,
-                "user": self.ib_username,
-                'password': self.ib_password,
-                'environment': os.getenv('ENVIRONMENT'),
-                'account': self.ib_account
+                "ib-user-name": self.ib_username,
+                "ib-password": self.ib_password,
+                "ib-account": self.ib_account,
+                "ib-weekly-restart-utc-time": "10:00:00",
             },
             'dataProviders': {
                 'QuantConnectBrokerage': {
                     'id': 'QuantConnectBrokerage'
                 },
-                "INTERACTIVE_BROKERS_BROKERAGE": {
+                "InteractiveBrokersBrokerage": {
                     'id': self.brokerage_id,
-                    'id-user-name': self.ib_username,
+                    'ib-user-name': self.ib_username,
                     'ib-account': self.ib_account,
                     'ib-password': self.ib_password,
                     'ib-weekly-restart-utc-time': '10:00:00',
@@ -95,13 +112,28 @@ class LiveUpdate():
         response = post(f"{qc.BASE_URL}/live/create",
                         headers=qc.get_headers(), json=payload)
 
-        result = response.json()
-        deploy_id = result['deployId']
+            
 
-        # Check if the request was successful and print the result
+        result = response.json()
+        
+        def get_algo_id():
+            set_key(path, 'ALGO_ID', result['live']['deployId'])
+
+        # log_result = json.dumps(result, indent=2)
+
+        # with open("algo-create.json", 'w') as a:
+        #     a.write(log_result)
+
+        # deploy_id = result.get('deployId')
+
         if result['success']:
-            print("Live Algorithm Created Successfully:")
+            get_algo_id()
+            print(f"Live Algorithm Created Successfully:\nALGO_ID: Updated")
             print(result)
+        # else:
+        #     print(result)
+
+        # return result
 
     def stop_live_algo(self):
         payload = {
@@ -111,7 +143,7 @@ class LiveUpdate():
         response = post(f"{self.base_url}/live/update/stop",
                         headers=qc.get_headers(), json=payload)
         result = response.json()
-        
+
         return result
 
     def liquidate(self):
@@ -119,7 +151,8 @@ class LiveUpdate():
             'projecId': self.project_id
         }
 
-        response = post(f"{self.base_url}", headers=qc.get_headers(), json=payload)
+        response = post(f"{self.base_url}",
+                        headers=qc.get_headers(), json=payload)
         result = response.json()
         # print(json.dump(result, indent=2))
 
