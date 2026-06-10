@@ -29,3 +29,7 @@ split the logs by "#" {cm:2026-05-28}
 Add a table for algo state and link using datetime {cm:2026-05-28}
 
 Add db append checks {cm:2026-05-28}
+
+Add the top metadata bar to algo stats
+
+Add order table

@@ -71,14 +71,14 @@ def startup_event():
 # to db on every bar
 
 
-@app.get("/live/log-data")
-def get_log_data():
-    return ld.get_log_data()
+# @app.get("/live/log-data")
+# def get_log_data():
+#     return ld.get_log_data()
 
 
-@app.get('/live/parse')
-def parse_log_data() -> dict:
-    return ld.parse_data()
+# @app.get('/live/parse')
+# def parse_log_data() -> dict:
+#     return ld.parse_data()
 
 
 @app.get('/live/chart')
@@ -119,7 +119,7 @@ def clear_ste():
 # -------- Algo actions ----------
 @app.post('/live/actions/start')
 def start_algo():
-    lu.start_live_algo()
+    return lu.start_live_algo()
 
 
 @app.post('live/actions/liquidate')
