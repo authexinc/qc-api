@@ -24,8 +24,8 @@ class ChartData(Base):
     close = Column(Float)
     volume = Column(Integer)
 
-    # ______ EMA Values ______
-    # ------ EMA 1min & MTE & 10min200 ------
+    # # ______ EMA Values ______
+    # # ------ EMA 1min & MTE & 10min200 ------
     ema_1min = Column(Float)
     ema_middle = Column(Float)
     mte_1 = Column(Float)
@@ -34,34 +34,34 @@ class ChartData(Base):
     mte_4 = Column(Float)
     ema_10_min_200 = Column(Float)
 
-    # ------ LTE ------
+    # # ------ LTE ------
     lte_1 = Column(Float)
     lte_2 = Column(Float)
 
-    # ------ MTE1 Levels 1-10 ------
-    mte1_L10 = Column(Float)
-    mte1_L9 = Column(Float)
-    mte1_L8 = Column(Float)
-    mte1_L7 = Column(Float)
-    mte1_L6 = Column(Float)
-    mte1_L5 = Column(Float)
-    mte1_L4 = Column(Float)
-    mte1_L3 = Column(Float)
-    mte1_L2 = Column(Float)
-    mte1_L1 = Column(Float)
+    # # ------ MTE1 Levels 1-10 ------
+    # mte1_L10 = Column(Float)
+    # mte1_L9 = Column(Float)
+    # mte1_L8 = Column(Float)
+    # mte1_L7 = Column(Float)
+    # mte1_L6 = Column(Float)
+    # mte1_L5 = Column(Float)
+    # mte1_L4 = Column(Float)
+    # mte1_L3 = Column(Float)
+    # mte1_L2 = Column(Float)
+    # mte1_L1 = Column(Float)
 
-    # ------ MTE4 Levels L5 to -L5 ------
-    mte4_L5 = Column(Float)
-    mte4_L4 = Column(Float)
-    mte4_L3 = Column(Float)
-    mte4_L2 = Column(Float)
-    mte4_L1 = Column(Float)
-    mte4_L0 = Column(Float)
-    mte4_nL1 = Column(Float)
-    mte4_nL2 = Column(Float)
-    mte4_nL3 = Column(Float)
-    mte4_nL4 = Column(Float)
-    mte4_nL5 = Column(Float)
+    # # ------ MTE4 Levels L5 to -L5 ------
+    # mte4_L5 = Column(Float)
+    # mte4_L4 = Column(Float)
+    # mte4_L3 = Column(Float)
+    # mte4_L2 = Column(Float)
+    # mte4_L1 = Column(Float)
+    # mte4_L0 = Column(Float)
+    # mte4_nL1 = Column(Float)
+    # mte4_nL2 = Column(Float)
+    # mte4_nL3 = Column(Float)
+    # mte4_nL4 = Column(Float)
+    # mte4_nL5 = Column(Float)
 
     # ------ Anchored EMAs ------
     ema_1min_A = Column(Float)
@@ -75,6 +75,9 @@ class ChartData(Base):
     ema_4min_100 = Column(Float)
     ema_4min_200 = Column(Float)
     ema_4min_300 = Column(Float)
+    ema_30min_750 = Column(Float)
+    ema_30min_2000 = Column(Float)
+    ema_30min_2500 = Column(Float)
 
 
 class AlgoState(Base):
@@ -84,28 +87,32 @@ class AlgoState(Base):
     datetime = Column(DateTime, ForeignKey('chart_values.datetime'))
     chart_data = relationship("ChartData", back_populates="algo_state")
 
-    state = Column(String(250))
-    gap = Column(String(250))
-    strategy = Column(String(250))
-    current_mte_type = Column(String(250))
-    current_mte_val = Column(Float)
-    next_mte = Column(String(250))
-    next_mte_val = Column(Float)
-    current_bie_val = Column(Float)
-    main_flow_state = Column(String(250))
-    highest_sl_ema_type = Column(String(250))
-    highest_sl_ema_val = Column(Float)
+    # state = Column(String(250))
+    # gap = Column(String(250))
+    # strategy = Column(String(250))
+    # current_mte_type = Column(String(250))
+    # current_mte_val = Column(Float)
+    # next_mte = Column(String(250))
+    # next_mte_val = Column(Float)
+    # current_bie_val = Column(Float)
+    # main_flow_state = Column(String(250))
+    # highest_sl_ema_type = Column(String(250))
+    # highest_sl_ema_val = Column(Float)
     one_min_high_val = Column(Float)
+    buy_in_price = Column(Float)
+    sell_price = Column(Float)
     one_min_high_G = Column(Float)
-    debs_main_buy_ok = Column(Boolean)
-    debs_main_sell_ok = Column(Boolean)
-    ema2min_buy_state = Column(String(250))
-    ema2min_sell_state = Column(String(250))
-    gap_up_ema = Column(Float)
-    gap_down_ema = Column(Float)
-    gbp = Column(Float)
-    gsp = Column(Float)
-    invested = Column(Boolean)
+    gap_price = Column(Float)
+    current_state = Column(String(250))
+    # debs_main_buy_ok = Column(Boolean)
+    # debs_main_sell_ok = Column(Boolean)
+    # ema2min_buy_state = Column(String(250))
+    # ema2min_sell_state = Column(String(250))
+    # gap_up_ema = Column(Float)
+    # gap_down_ema = Column(Float)
+    # gbp = Column(Float)
+    # gsp = Column(Float)
+    # invested = Column(Boolean)
     
     
     

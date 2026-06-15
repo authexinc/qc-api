@@ -3,7 +3,7 @@ from . import quantconnect as qh
 import json
 import logging
 import re
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 import os
 import datetime as dt
 import db.update_row as ur
@@ -11,7 +11,7 @@ from db.model import ChartData, Session, AlgoState
 from sqlalchemy import select
 
 load_dotenv()
-
+path = '.env'
 
 
 def safe_float(val):
@@ -60,10 +60,25 @@ def safe_str(val):
 
 def get_log() -> dict:
 
+    def get_deploy_id() -> str:
+        payload = {
+            "projectId": os.getenv('PROJECT_ID'),
+            "status":"Running"
+        }
+
+        response = post(f"{qh.BASE_URL}/live/list", headers=qh.get_headers(), json=payload)
+        
+        result = response.json()['live'][0]['deployId']
+        
+        set_key(path, 'ALGO_ID', result)
+            
+        return result
+    
+    
     def init_request(startline=0, endline=1) -> str:  # Gets the log length
         payload = {
             'projectId': os.getenv('PROJECT_ID'),
-            'algorithmId': os.getenv('ALGO_ID'),
+            'algorithmId': get_deploy_id(),
             'startLine': startline,
             'endLine': endline,
             "deploymentLogs": True
@@ -105,156 +120,168 @@ def get_log() -> dict:
 
 
 def parse_data() -> list:
-    # logs = get_log()['logs'].split("#")
     logs = get_log()["logs"]
     log_list = []
 
-    for log in logs:
-        logs_split = log.split("#")
-        status = logs_split[0]
-        state = logs_split[1].split("|")
-        values = logs_split[2].split('|')
-
-        def datetime_parse() -> str:
-
-            datetime_pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'
-
-            match = re.search(datetime_pattern, status)
-
-            if match:
-                # date = datetime.datetime.strptime(match.group(), "%Y-%m-%d")
-                return match[1]
-            else:
-                print("no datetime found")
-
-        def parse_state() -> dict:
-            logs = [log.strip(" ") for log in state]
-
-            result = {}
-            for item in logs:
-                if ":" in item:
-                    k, v = item.split(":", 1)
-                    result[k.strip()] = v.strip()
-                elif item.startswith("EMA2min_Sell_State"):
-                    result["EMA2min_Sell_State"] = item[len("EMA2min_Sell_State"):].strip()
-
-            return result
-
-        def parse_values() -> dict:
-            value_list = [value.strip(" ") for value in values]
-
-            result = {}
-            for value in value_list:
-                if ":" in value:
-                    k, v = value.split(":", 1)
-                    result[k.strip()] = v.strip(" $")
-                elif "$" in value:
-                    k, v = value.split("$", 1)
-                    result[k.strip()] = v.strip()
-
-            return result
+    for log_str in logs:
+        log = {re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} ', '', entry.split("=")[0].strip()): entry.split("=", 1)[1].strip()
+               for entry in log_str.split("#") if "=" in entry}
 
         log_list.append({
-            "datetime": dt.datetime.strptime(datetime_parse(), "%Y-%m-%d %H:%M:%S"),
-            # "datetime": datetime_parse(),
-            "state": parse_state(),
-            "values": parse_values(),
+            'time': dt.datetime.strptime(log['time'], "%Y-%m-%d %H:%M:%S"),
+            'open': log['open'],
+            'high': log['high'],
+            'low': log['low'],
+            'close': log['close'],
+            'volume': log['volume'],
+            'ema_1min_6': log["ema_1min_60"],
+            "ema_1min_60": log['ema_1min_60'],
+            'ema_2min_60': log['ema_2min_60'],
+            'ema_3min_80': log['ema_3min_80'],
+            'ema_4min_100': log['ema_4min_100'],
+            'ema_4min_200': log['ema_4min_200'],
+            'ema_4min_300': log['ema_4min_300'],
+            'ema_10min_200': log['ema_10min_200'],
+            'ema_30min_750': log['ema_30min_750'],
+            'ema_30min_2000': log['ema_30min_2000'],
+            'ema_30min_2500': log['ema_30min_2500'],
+            'mte1': log['mte1'],
+            'mte2': log['mte2'],
+            'mte3': log['mte3'],
+            'mte4': log['mte4'],
+            'lte1': log['lte1'],
+            'lte2': log['lte2'],
+            'ema_1min_6_a': log['ema_1min_6_a'],
+            'ema_2min_60_a': log['ema_2min_60_a'],
+            'ema_4min_100_a': log['ema_4min_100_a'],
+            'ema_4min_300_a': log['ema_4min_300_a'],
+            'one_min_high': log['one_min_high'],
+            'buy_in_price': log['buy_in_price'],
+            'sell_price': log['sell_price'],
+            'one_min_high_g': log['one_min_high_g'],
+            'gap_price': log['gap_price'],
+            'current_state': log['current_state']
         })
 
     return log_list
+
+# def parse_data() -> list:
+#     # logs = get_log()['logs'].split("#")
+#     logs = get_log()["logs"]
+#     log_list = []
+
+#     for log in logs:
+#         logs_split = log.split("#")
+#         status = logs_split[0]
+#         state = logs_split[1].split("|")
+#         values = logs_split[2].split('|')
+
+#         def datetime_parse() -> str:
+
+#             datetime_pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})'
+
+#             match = re.search(datetime_pattern, status)
+
+#             if match:
+#                 # date = datetime.datetime.strptime(match.group(), "%Y-%m-%d")
+#                 return match[1]
+#             else:
+#                 print("no datetime found")
+
+#         def parse_state() -> dict:
+#             logs = [log.strip(" ") for log in state]
+
+#             result = {}
+#             for item in logs:
+#                 if ":" in item:
+#                     k, v = item.split(":", 1)
+#                     result[k.strip()] = v.strip()
+#                 elif item.startswith("EMA2min_Sell_State"):
+#                     result["EMA2min_Sell_State"] = item[len("EMA2min_Sell_State"):].strip()
+
+#             return result
+
+#         def parse_values() -> dict:
+#             value_list = [value.strip(" ") for value in values]
+
+#             result = {}
+#             for value in value_list:
+#                 if ":" in value:
+#                     k, v = value.split(":", 1)
+#                     result[k.strip()] = v.strip(" $")
+#                 elif "$" in value:
+#                     k, v = value.split("$", 1)
+#                     result[k.strip()] = v.strip()
+
+#             return result
+
+#         log_list.append({
+#             "datetime": dt.datetime.strptime(datetime_parse(), "%Y-%m-%d %H:%M:%S"),
+#             # "datetime": datetime_parse(),
+#             "state": parse_state(),
+#             "values": parse_values(),
+#         })
+
+#     return log_list
+
+
 
 
 def add_to_db():
     '''
     Map all values to appropriate cols in the db.
     '''
-    for data in parse_data():
+    for values in parse_data():
         
-        date = data["datetime"]
-        state = data['state']
-        values = data['values']
-
         session = Session()
         existing = session.execute(select(ChartData).where(
-            ChartData.datetime == date)).scalar_one_or_none()
+            ChartData.datetime == values['time'])).scalar_one_or_none()
         session.close()
         
         if existing:
-            logging.info(f"Skipping duplicate row for {date}")
+            logging.info(f"Skipping duplicate row for {values['time']}")
             continue
 
         ur.populate_chart(
-            date,
-            safe_float(values.get('Open')),
-            safe_float(values.get('High')),
-            safe_float(values.get('Low')),
-            safe_float(values.get('Close')),
-            safe_int(values.get('Volume')),
-            safe_float(values.get('EMA_1min')),
-            safe_float(values.get('EMA_Middle')),
-            safe_float(values.get('MTE1')),
-            safe_float(values.get('MTE2')),
-            safe_float(values.get('MTE3')),
-            safe_float(values.get('MTE4')),
-            safe_float(values.get("EMA_10min_200")),
-            safe_float(values.get('LTE1')),
-            safe_float(values.get("LTE2")),
-            safe_float(values.get('MTE1_L10')),
-            safe_float(values.get("MTE1_L9")),
-            safe_float(values.get('MTE1_L8')),
-            safe_float(values.get('MTE1_L7')),
-            safe_float(values.get('MTE1_L6')),
-            safe_float(values.get('MTE1_L5')),
-            safe_float(values.get("MTE1_L4")),
-            safe_float(values.get("MTE1_L3")),
-            safe_float(values.get("MTE1_L2")),
-            safe_float(values.get("MTE1_L1")),
-            safe_float(values.get("MTE4_L5")),
-            safe_float(values.get("MTE4_L4")),
-            safe_float(values.get("MTE4_L3")),
-            safe_float(values.get("MTE4_L2")),
-            safe_float(values.get("MTE4_L1")),
-            safe_float(values.get("MTE4_L0")),
-            safe_float(values.get("MTE4_-L1")),
-            safe_float(values.get("MTE4_-L2")),
-            safe_float(values.get("MTE4_-L3")),
-            safe_float(values.get("MTE4_-L4")),
-            safe_float(values.get("MTE4_-L5")),
-            safe_float(values.get("EMA_1min_A")),
-            safe_float(values.get("EMA_Middle_A")),
-            safe_float(values.get("EMA_4min_100_A")),
-            safe_float(values.get("EMA_4min_300_A")),
-            safe_float(values.get("EMA_1min_60") or values.get("EMA_!min_60")),
-            safe_float(values.get("EMA_3min_80")),
-            safe_float(values.get('EMA_4min_100')),
-            safe_float(values.get("EMA_4min_200")),
-            safe_float(values.get("EMA_4min_300"))
-        )
+            values['time'],
+            safe_float(values.get('open')),
+            safe_float(values.get('high')),
+            safe_float(values.get('low')),
+            safe_float(values.get('close')),
+            safe_int(values.get('volume')),
+            safe_float(values.get('ema_1min_6')),
+            safe_float(values.get('ema_2min_60')),
+            safe_float(values.get('mte1')),
+            safe_float(values.get('mte2')),
+            safe_float(values.get('mte3')),
+            safe_float(values.get('mte4')),
+            safe_float(values.get("ema_10min_200")),
+            safe_float(values.get('lte1')),
+            safe_float(values.get("lte2")),
+            safe_float(values.get("ema_1min_6_a")),
+            safe_float(values.get("ema_2min_60_a")),
+            safe_float(values.get("ema_4min_100_a")),
+            safe_float(values.get("ema_4min_300_a")),
+            safe_float(values.get("ema_1min_60")),
+            safe_float(values.get("ema_3min_80")),
+            safe_float(values.get('ema_4min_100')),
+            safe_float(values.get("ema_4min_200")),
+            safe_float(values.get("ema_4min_300")),
+            safe_float(values.get('ema_30min_750')),
+            safe_float(values.get('ema_30min_2000')),
+            safe_float(values.get('ema_30min_2500'))
+            
+            )
 
         ur.populate_algo_state(
-            date,
-            safe_str(state.get("State")),
-            safe_str(state.get("Gap")),
-            safe_str(state.get("Strategy")),
-            safe_str(state.get("Current_MTE_Type")),
-            safe_float(state.get("Current_MTE_Val")),
-            safe_str(state.get("Next_MTE")),
-            safe_float(state.get("Next_MTE_Val")),
-            safe_float(state.get("Current_BIE_Val")),
-            safe_str(state.get("MainFlowState")),
-            safe_str(state.get("Highest_SL_EMA_Type")),
-            safe_float(state.get("Highest_SL_EMA_Val")),
-            safe_float(state.get("One_Min_High")),
-            safe_float(state.get("One_Min_High_G")),
-            safe_bool(state.get("DEBS_Main_Buy_OK")),
-            safe_bool(state.get("DEBS_Main_Sell_OK")),
-            safe_str(state.get("EMA2min_Buy_State")),
-            safe_str(state.get("EMA2min_Sell_State")),
-            safe_float(state.get("Gap_UP_EMA")),
-            safe_float(state.get("Gap_Down_EMA")),
-            safe_float(state.get("GBP")),
-            safe_float(state.get("GSP")),
-            safe_bool(state.get("Invested"))
+            values['time'],
+            safe_float(values.get('one_min_high')),
+            safe_float(values.get('buy_in_price')),
+            safe_float(values.get('sell_price')),
+            safe_float(values.get('one_min_high_g')),
+            safe_float(values.get('gap_price')),
+            safe_str(values.get('current_state'))
+
         )
 
     # Need a table for state information and link by timestamp

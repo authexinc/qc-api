@@ -31,6 +31,11 @@ test6-logs.json
 test7.py
 test8.py
 algo-create.json
+test9.py
+test9-logs.json
+test_logs_last.py
+test9-parse.py
+test9-parse.json
 
 test1-logs.json
 good_logs.json

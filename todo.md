@@ -12,7 +12,7 @@ Need to paramaterize Project/AlgorithmID so it can be passed in the API call
 
 Create db file {cm:2026-05-25}
 
-TV DataFeed
+TV DataFeed {cm:2026-06-10}
 
 Every time log data is called, add values to db {cm:2026-05-28}
 
@@ -20,7 +20,7 @@ Fix the log list index in parse_data() to capture all values {cm:2026-05-28}
 
 ## For DB, need to convert datetime to proper datetime format and use that as the key {cm:2026-05-28}
 
-For the output - JSON containing OHLC, ema values - JSON containing meta data like invested, p&l, equity, etc.
+For the output - JSON containing OHLC, ema values - JSON containing meta data like invested, p&l, equity, etc. {cm:2026-06-10}
 
 Strip dollar sign from OHLC, MTE, EMAs, LTEs {cm:2026-05-28}
 
@@ -32,4 +32,12 @@ Add db append checks {cm:2026-05-28}
 
 Add the top metadata bar to algo stats
 
-Add order table
+Add order table api call and relevant endpoint
+
+Need to add alembic for future migrations
+
+Change model.py, update_row.py and relevant functions to reflect new tracked values {cm:2026-06-15}
+
+Add buy/sell, static sl, 1minhigh/1minhighG reset logic and endpoints
+
+If algorithm was redeployed on QC, add a function that checks and matches the hashed deployment id in env and the one from the endpoint
