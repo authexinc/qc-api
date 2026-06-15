@@ -1,4 +1,4 @@
-from .model import Session, ChartData, AlgoState
+from .model import Session, ChartData, AlgoState, LiveStats
 import datetime
 
 
@@ -64,7 +64,7 @@ def populate_chart(
 #                         gbp_: float, gsp_: float, invested_: bool
 #                         ):
 
-def popilate_algo_state(
+def populate_algo_state(
     datetime_: datetime.datetime, one_min_high_val_: float, buy_in_price_: float,
     sell_price_: float, one_min_high_G_: float, gap_price_: float, current_state_: str
 ):
@@ -74,6 +74,37 @@ def popilate_algo_state(
         new_row = AlgoState(datetime=datetime_, one_min_high_val=one_min_high_val_, buy_in_price=buy_in_price_, sell_price=sell_price_,
                             one_min_high_G=one_min_high_G_, gap_price=gap_price_, current_state=current_state_
                             )
+
+        session.add(new_row)
+        session.commit()
+
+    except Exception as e:
+        session.rollback()
+        raise e
+
+    finally:
+        session.close()
+
+
+def populate_live_stats(
+    datetime_: datetime.datetime, equity_: float, fees_: float, holdings_: float,
+    net_profit_: float, sharpe_ratio_: float, return_pct_: float, unrealized_: float,
+    volume_: float
+):
+    session = Session()
+
+    try:
+        new_row = LiveStats(
+            datetime=datetime_,
+            equity=equity_,
+            fees=fees_,
+            holdings=holdings_,
+            net_profit=net_profit_,
+            sharpe_ratio=sharpe_ratio_,
+            return_pct=return_pct_,
+            unrealized=unrealized_,
+            volume=volume_
+        )
 
         session.add(new_row)
         session.commit()

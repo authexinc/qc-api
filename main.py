@@ -68,6 +68,8 @@ def trading_hours_scheduler():
             if is_weekday and is_trading_hours:
                 logger.info(f"Trading hours: Running database update (add_to_db)...")
                 ld.add_to_db()
+                logger.info(f"Trading hours: Running database update (update_live_stats_db)...")
+                ld.update_live_stats_db()
             else:
                 logger.info(f"Skipping database update: Current time ({now_est.strftime('%Y-%m-%d %H:%M:%S %Z')}) is outside regular trading hours (Mon-Fri 9:30 AM - 4:00 PM EST).")
         except Exception as e:
@@ -80,6 +82,10 @@ def trading_hours_scheduler():
 
 @app.on_event("startup")
 def startup_event():
+    # Ensure database tables are created
+    from db.model import Base, engine
+    Base.metadata.create_all(bind=engine)
+    
     thread = threading.Thread(target=trading_hours_scheduler, daemon=True)
     thread.start()
 
@@ -93,6 +99,12 @@ def startup_event():
 @app.get("/live/log-data")
 def get_log_data():
     return ld.get_log()
+
+
+@app.get("/live/stats")
+def get_live_stats():
+    from qc.live_stats import live_stats
+    return live_stats()
 
 
 # @app.get('/live/parse')

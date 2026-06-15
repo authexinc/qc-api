@@ -1,5 +1,6 @@
 from requests import post
 from . import quantconnect as qh
+from .live_stats import live_stats
 import json
 import logging
 import re
@@ -12,6 +13,18 @@ from sqlalchemy import select
 
 load_dotenv()
 path = '.env'
+
+
+def clean_stat_float(val):
+    if val is None:
+        return None
+    val_str = str(val).strip().replace('$', '').replace(',', '').replace('%', '').replace(' ', '')
+    if val_str.lower() in ('none', 'null', '', 'idle'):
+        return None
+    try:
+        return float(val_str)
+    except ValueError:
+        return None
 
 
 def safe_float(val):
@@ -312,6 +325,32 @@ def chart_status() -> list[dict]:
         d['datetime'] = d['datetime'].isoformat() if d.get('datetime') else None
         result.append(d)
     return result
+
+
+def update_live_stats_db():
+    try:
+        stats_data = live_stats()
+        if not stats_data or 'runtimeStatistics' not in stats_data:
+            logging.warning("No runtimeStatistics returned from live_stats().")
+            return
+        
+        stats = stats_data['runtimeStatistics']
+        now = dt.datetime.now()
+        
+        ur.populate_live_stats(
+            datetime_=now,
+            equity_=clean_stat_float(stats.get('Equity')),
+            fees_=clean_stat_float(stats.get('Fees')),
+            holdings_=clean_stat_float(stats.get('Holdings')),
+            net_profit_=clean_stat_float(stats.get('Net Profit')),
+            sharpe_ratio_=clean_stat_float(stats.get('Probabilistic Sharpe Ratio')),
+            return_pct_=clean_stat_float(stats.get('Return')),
+            unrealized_=clean_stat_float(stats.get('Unrealized')),
+            volume_=clean_stat_float(stats.get('Volume'))
+        )
+        logging.info(f"Successfully saved live stats to database at {now}")
+    except Exception as e:
+        logging.error(f"Error updating live stats database: {e}")
 
 
 if __name__ == "__main__":

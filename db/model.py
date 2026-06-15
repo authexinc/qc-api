@@ -115,6 +115,20 @@ class AlgoState(Base):
     # invested = Column(Boolean)
     
     
+class LiveStats(Base):
+    __tablename__ = 'live_stats'
+
+    id = Column(Integer, primary_key=True)
+    datetime = Column(DateTime, unique=True)
+    equity = Column(Float)
+    fees = Column(Float)
+    holdings = Column(Float)
+    net_profit = Column(Float)
+    sharpe_ratio = Column(Float)
+    return_pct = Column(Float)
+    unrealized = Column(Float)
+    volume = Column(Float)
+    
     
 if __name__ == "__main__":
     Base.metadata.create_all(engine)
