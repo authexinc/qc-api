@@ -1,3 +1,9 @@
+from zoneinfo import ZoneInfo
+import logging
+import datetime
+import time
+import threading
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from qc import quantconnect, log_data
@@ -7,7 +13,6 @@ from append_file.append import AppendValue
 
 qc, ld = quantconnect, log_data
 
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(docs_url=None, redoc_url=None)
 
@@ -19,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
     return get_swagger_ui_html(
@@ -28,6 +34,7 @@ async def custom_swagger_ui_html():
         swagger_js_url="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui-bundle.js",
         swagger_css_url="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.9.0/swagger-ui.css",
     )
+
 
 @app.get("/redoc", include_in_schema=False)
 async def redoc_html():
@@ -40,15 +47,11 @@ async def redoc_html():
 live_update = AppendValue()
 lu = LiveUpdate()
 
-import threading
-import time
-import datetime
-import logging
-from zoneinfo import ZoneInfo
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("qc-scheduler")
+
 
 def trading_hours_scheduler():
     logger.info("Trading hours scheduler thread started.")
@@ -56,36 +59,40 @@ def trading_hours_scheduler():
         try:
             # 1. Get current time in Eastern Time
             now_est = datetime.datetime.now(ZoneInfo("America/New_York"))
-            
+
             # 2. Check if it's weekday (Monday=0 to Friday=4)
             is_weekday = now_est.weekday() < 5
-            
+
             # 3. Check if time is between 9:30 AM and 4:00 PM EST
             start_time = datetime.time(9, 30, 0)
             end_time = datetime.time(16, 0, 0)
             is_trading_hours = start_time <= now_est.time() <= end_time
-            
+
             if is_weekday and is_trading_hours:
-                logger.info(f"Trading hours: Running database update (add_to_db)...")
+                logger.info(
+                    f"Trading hours: Running database update (add_to_db)...")
                 ld.add_to_db()
-                logger.info(f"Trading hours: Running database update (update_live_stats_db)...")
+                logger.info(
+                    f"Trading hours: Running database update (update_live_stats_db)...")
                 ld.update_live_stats_db()
             else:
-                logger.info(f"Skipping database update: Current time ({now_est.strftime('%Y-%m-%d %H:%M:%S %Z')}) is outside regular trading hours (Mon-Fri 9:30 AM - 4:00 PM EST).")
+                logger.info(
+                    f"Skipping database update: Current time ({now_est.strftime('%Y-%m-%d %H:%M:%S %Z')}) is outside regular trading hours (Mon-Fri 9:30 AM - 4:00 PM EST).")
         except Exception as e:
             logger.error(f"Error in trading_hours_scheduler: {e}")
-            
+
         # Sleep until the start of the next minute
         now = datetime.datetime.now()
         sleep_time = 60 - now.second - (now.microsecond / 1000000.0)
         time.sleep(sleep_time)
+
 
 @app.on_event("startup")
 def startup_event():
     # Ensure database tables are created
     from db.model import Base, engine
     Base.metadata.create_all(bind=engine)
-    
+
     thread = threading.Thread(target=trading_hours_scheduler, daemon=True)
     thread.start()
 
@@ -145,6 +152,21 @@ def update_ste(ste):
 @app.post('/live/actions/clear/ste')
 def clear_ste():
     live_update.clear_ste()
+
+
+@app.post('/live/actions/buy-sell/{action}')
+def buy_sell_(action: int):
+    live_update.buy_sell(action)
+
+
+@app.post('/live/actions/one_min_G_reset/{action}')
+def one_min_G_reset_(action: int):
+    live_update.one_min_G_reset(action)
+
+
+@app.post('/live/actions/one_min_reset/{action}')
+def one_min_reset_(action: int):
+    live_update.one_min_reset(action)
 
 
 # -------- Algo actions ----------
