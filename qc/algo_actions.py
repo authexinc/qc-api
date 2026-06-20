@@ -9,7 +9,7 @@ path = '.env'
 
 class LiveUpdate():
     def __init__(self):
-        self.deploy_id = os.getenv('DEPLOY_ID')
+        self.deploy_id = os.getenv('DEPLOY_ID') or os.getenv('ALGO_ID')
         self.project_id = os.getenv("PROJECT_ID")
         self.base_url = os.getenv('BASE_URL')
         self.node_id = None

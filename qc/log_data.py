@@ -71,9 +71,12 @@ def safe_str(val):
     return val_str
 
 
-def get_log() -> dict:
+def get_log(algo_id: str = None, limit: int = 200) -> dict:
 
     def get_deploy_id() -> str:
+        if algo_id:
+            return algo_id
+
         payload = {
             "projectId": os.getenv('PROJECT_ID'),
             "status":"Running"
@@ -88,7 +91,7 @@ def get_log() -> dict:
         return result
     
     
-    def init_request(startline=0, endline=1) -> str:  # Gets the log length
+    def init_request(startline=0, endline=1) -> dict:  # Gets the logs for the range
         payload = {
             'projectId': os.getenv('PROJECT_ID'),
             'algorithmId': get_deploy_id(),
@@ -96,84 +99,88 @@ def get_log() -> dict:
             'endLine': endline,
             "deploymentLogs": True
         }
-        # sample_payload = {
-        #     "algorithmId": "L-321d891c57c3bf8c977462a31f51afe8",
-        #     "start": startline,
-        #     "end": endline,
-        #     "projectId": 31331605
-        # }
         response = post(f'{qh.BASE_URL}/live/logs/read',
                         headers=qh.get_headers(), json=payload)
 
-        content = response.json()
+        return response.json()
 
-        return content
+    # 1. Fetch initial response to get the total log length
+    init_content = init_request(0, 1)
+    if not init_content.get('success'):
+        logging.error(f"Failed to query QuantConnect API for logs: {init_content.get('errors')}")
+        return {"logs": []}
 
-    init_content = init_request()
+    int_len = int(init_content.get('length', 0))
+    start_index = max(0, int_len - limit) if limit is not None else 0
 
-    def log_len(contains) -> int:
-        int_len = contains.get('length')  # Returns endLine
-        int_len = int(int_len)
+    # 2. Paginate requests in chunks of 250 (QC API limit)
+    logs = []
+    current_start = start_index
+    while current_start < int_len:
+        current_end = min(current_start + 250, int_len)
+        if current_end <= current_start:
+            break
+        chunk = init_request(current_start, current_end)
+        if not chunk.get('success'):
+            logging.error(f"Error fetching log chunk {current_start} to {current_end}: {chunk.get('errors')}")
+            break
+        logs.extend(chunk.get('logs', []))
+        current_start = current_end
 
-        if int_len > 200:
-            startline = int_len - 200
-        else:
-            startline = 0
-
-        startline = int(startline)
-
-        return startline, int_len
-
-    first, second = log_len(init_content)
-
-    return init_request(first, second)
+    return {"logs": logs}
 
     # # Log length = 800, get the last 200, endLine - 200 = startline
     # # Then we have the startline and end line to make the request for the last 200 logs
 
 
-def parse_data() -> list:
-    logs = get_log()["logs"]
+def parse_data(algo_id: str = None, limit: int = 200) -> list:
+    logs = get_log(algo_id=algo_id, limit=limit)["logs"]
     log_list = []
 
     for log_str in logs:
+        if "time=" not in log_str:
+            continue
+
         log = {re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} ', '', entry.split("=")[0].strip()): entry.split("=", 1)[1].strip()
                for entry in log_str.split("#") if "=" in entry}
 
+        if 'time' not in log:
+            continue
+
         log_list.append({
             'time': dt.datetime.strptime(log['time'], "%Y-%m-%d %H:%M:%S"),
-            'open': log['open'],
-            'high': log['high'],
-            'low': log['low'],
-            'close': log['close'],
-            'volume': log['volume'],
-            'ema_1min_6': log["ema_1min_60"],
-            "ema_1min_60": log['ema_1min_60'],
-            'ema_2min_60': log['ema_2min_60'],
-            'ema_3min_80': log['ema_3min_80'],
-            'ema_4min_100': log['ema_4min_100'],
-            'ema_4min_200': log['ema_4min_200'],
-            'ema_4min_300': log['ema_4min_300'],
-            'ema_10min_200': log['ema_10min_200'],
-            'ema_30min_750': log['ema_30min_750'],
-            'ema_30min_2000': log['ema_30min_2000'],
-            'ema_30min_2500': log['ema_30min_2500'],
-            'mte1': log['mte1'],
-            'mte2': log['mte2'],
-            'mte3': log['mte3'],
-            'mte4': log['mte4'],
-            'lte1': log['lte1'],
-            'lte2': log['lte2'],
-            'ema_1min_6_a': log['ema_1min_6_a'],
-            'ema_2min_60_a': log['ema_2min_60_a'],
-            'ema_4min_100_a': log['ema_4min_100_a'],
-            'ema_4min_300_a': log['ema_4min_300_a'],
-            'one_min_high': log['one_min_high'],
-            'buy_in_price': log['buy_in_price'],
-            'sell_price': log['sell_price'],
-            'one_min_high_g': log['one_min_high_g'],
-            'gap_price': log['gap_price'],
-            'current_state': log['current_state']
+            'open': log.get('open'),
+            'high': log.get('high'),
+            'low': log.get('low'),
+            'close': log.get('close'),
+            'volume': log.get('volume'),
+            'ema_1min_6': log.get("ema_1min_60") or log.get("ema_1min_6"),
+            "ema_1min_60": log.get('ema_1min_60'),
+            'ema_2min_60': log.get('ema_2min_60'),
+            'ema_3min_80': log.get('ema_3min_80'),
+            'ema_4min_100': log.get('ema_4min_100'),
+            'ema_4min_200': log.get('ema_4min_200'),
+            'ema_4min_300': log.get('ema_4min_300'),
+            'ema_10min_200': log.get('ema_10min_200'),
+            'ema_30min_750': log.get('ema_30min_750'),
+            'ema_30min_2000': log.get('ema_30min_2000'),
+            'ema_30min_2500': log.get('ema_30min_2500'),
+            'mte1': log.get('mte1'),
+            'mte2': log.get('mte2'),
+            'mte3': log.get('mte3'),
+            'mte4': log.get('mte4'),
+            'lte1': log.get('lte1'),
+            'lte2': log.get('lte2'),
+            'ema_1min_6_a': log.get('ema_1min_6_a'),
+            'ema_2min_60_a': log.get('ema_2min_60_a'),
+            'ema_4min_100_a': log.get('ema_4min_100_a'),
+            'ema_4min_300_a': log.get('ema_4min_300_a'),
+            'one_min_high': log.get('one_min_high'),
+            'buy_in_price': log.get('buy_in_price'),
+            'sell_price': log.get('sell_price'),
+            'one_min_high_g': log.get('one_min_high_g'),
+            'gap_price': log.get('gap_price'),
+            'current_state': log.get('current_state')
         })
 
     return log_list
@@ -240,11 +247,16 @@ def parse_data() -> list:
 
 
 
-def add_to_db():
+def add_to_db(algo_id: str = None, limit: int = 200):
     '''
     Map all values to appropriate cols in the db.
     '''
-    for values in parse_data():
+    parsed = parse_data(algo_id=algo_id, limit=limit)
+    if not parsed:
+        logging.info("No new log data to add to database.")
+        return
+
+    for values in parsed:
         
         session = Session()
         existing = session.execute(select(ChartData).where(
@@ -354,33 +366,14 @@ def update_live_stats_db():
 
 
 if __name__ == "__main__":
-    # print(type(get_log_data()))
-    # for log in parse_data():
-    #     print(f"\n{log}")
+    import argparse
+    parser = argparse.ArgumentParser(description="Seed database with QuantConnect algorithm logs.")
+    parser.add_argument('--algo-id', type=str, help="Specific algorithm deployment ID to seed from.")
+    parser.add_argument('--limit', type=int, default=200, help="Number of recent log lines to fetch. Use 0 or negative for all logs.")
+    args = parser.parse_args()
 
-    # print(parse_data())
-    # print(json.dumps(get_log_data(), indent=4))
-
-    # test = json.dumps(parse_data(), indent=2)
-    # test = get_log()['logs']
-    # print(parse_data()[0:3])
-    # print(add_to_db())
-    # test = json.dumps(parse_data(), indent=2)
-    # with open('test6-logs.json', 'w') as t:
-    #     t.write(test)
+    limit = args.limit if args.limit > 0 else None
     
-    # for data in parse_data():
-    #     print(f'\n{data}')
-    # print(parse_data())
-    # print(get_log())
-    # print(type(parse_data()))
-    # print(type(parse_data()[0]['datetime']))
-    add_to_db()
-
-    # for data in parse_data():
-    
-    #     date = data["datetime"]
-    #     state = data['state']
-    #     values = data['values']
-        
-    #     print(date, state, values)    
+    logging.basicConfig(level=logging.INFO)
+    logging.info(f"Running database seeding with algo_id={args.algo_id} and limit={limit}...")
+    add_to_db(algo_id=args.algo_id, limit=limit)
