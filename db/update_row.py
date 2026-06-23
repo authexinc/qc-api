@@ -1,4 +1,4 @@
-from .model import Session, ChartData, AlgoState, LiveStats
+from .model import Session, ChartData, AlgoState, LiveStats, Order
 import datetime
 
 
@@ -115,3 +115,31 @@ def populate_live_stats(
 
     finally:
         session.close()
+
+
+def populate_order(
+    order_id_: int, price_: float, time_: datetime.datetime,
+    symbol_: str, algo_id_: str, datetime_: datetime.datetime
+):
+    session = Session()
+
+    try:
+        new_row = Order(
+            order_id=order_id_,
+            price=price_,
+            time=time_,
+            symbol=symbol_,
+            algo_id=algo_id_,
+            datetime=datetime_
+        )
+
+        session.add(new_row)
+        session.commit()
+
+    except Exception as e:
+        session.rollback()
+        raise e
+
+    finally:
+        session.close()
+

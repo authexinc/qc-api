@@ -40,8 +40,13 @@ test9-parse.json
 test1-logs.json
 good_logs.json
 final-logs.json
+test11-logs.json
+test_logs_last.py
 
 notes.md
 
 test10.py
 test10-logs.json
+
+test11.py
+test11.json

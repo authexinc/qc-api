@@ -16,6 +16,7 @@ class ChartData(Base):
     id = Column(Integer, primary_key=True)
     datetime = Column(DateTime, unique=True)
     algo_state = relationship("AlgoState", back_populates="chart_data", uselist=False)
+    orders = relationship("Order", back_populates="chart_data")
 
     # ------ OHLCv Data ------
     open = Column(Float)
@@ -128,6 +129,20 @@ class LiveStats(Base):
     return_pct = Column(Float)
     unrealized = Column(Float)
     volume = Column(Float)
+
+
+class Order(Base):
+    __tablename__ = 'orders'
+
+    id = Column(Integer, primary_key=True)
+    order_id = Column(Integer, nullable=False)
+    price = Column(Float)
+    time = Column(DateTime)
+    symbol = Column(String(50))
+    algo_id = Column(String(250))
+    datetime = Column(DateTime, ForeignKey('chart_values.datetime'))
+
+    chart_data = relationship("ChartData", back_populates="orders")
     
     
 if __name__ == "__main__":
