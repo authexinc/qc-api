@@ -30,14 +30,18 @@ Add a table for algo state and link using datetime {cm:2026-05-28}
 
 Add db append checks {cm:2026-05-28}
 
-Add the top metadata bar to algo stats
+Add the top metadata bar to algo stats {cm:2026-06-22}
 
-Add order table api call and relevant endpoint
+Add order table api call and relevant endpoint {cm:2026-06-22}
 
 Need to add alembic for future migrations
 
 Change model.py, update_row.py and relevant functions to reflect new tracked values {cm:2026-06-15}
 
-Add buy/sell, static sl, 1minhigh/1minhighG reset logic and endpoints
+Add buy/sell, static sl, 1minhigh/1minhighG reset logic and endpoints {cm:2026-06-22}
 
 If algorithm was redeployed on QC, add a function that checks and matches the hashed deployment id in env and the one from the endpoint
+
+He wants to be able to set initial offset for anchored EMA
+
+One min High and one min High G reset fix 

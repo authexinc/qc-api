@@ -78,7 +78,7 @@ class AppendValue():
         if action not in (0, 1):
             return f'{action} is not accepted, value must be 1 or 0'
         try:
-            self.ws.update_cell(2, 2, 'True' if action == 1 else 'False')
+            self.ws.update_cell(2, 3, 'True' if action == 1 else 'False')
         except Exception as e:
             return f'Failed to update cell: {e}'
 
@@ -87,7 +87,7 @@ class AppendValue():
         if action not in (0, 1):
             return f'{action} is not accepted, value must be 1 or 0'
         try:
-            self.ws.update_cell(2, 2, 'True' if action == 1 else 'False')
+            self.ws.update_cell(2, 10, 'True' if action == 1 else 'False')
         except Exception as e:
             return f'Failed to update cell: {e}'
 
