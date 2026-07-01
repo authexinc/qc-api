@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from qc import quantconnect, log_data
 from qc.algo_actions import LiveUpdate
+from qc.order_data import add_orders_to_db
 import append_file.append as ap
 from append_file.append import AppendValue
 
@@ -63,9 +64,9 @@ def trading_hours_scheduler():
             # 2. Check if it's weekday (Monday=0 to Friday=4)
             is_weekday = now_est.weekday() < 5
 
-            # 3. Check if time is between 9:30 AM and 4:00 PM EST
+            # 3. Check if time is between 9:30 AM and 4:15 PM EST (to catch buffered end-of-day logs)
             start_time = datetime.time(9, 30, 0)
-            end_time = datetime.time(16, 0, 0)
+            end_time = datetime.time(16, 15, 0)
             is_trading_hours = start_time <= now_est.time() <= end_time
 
             if is_weekday and is_trading_hours:
@@ -75,6 +76,12 @@ def trading_hours_scheduler():
                 logger.info(
                     f"Trading hours: Running database update (update_live_stats_db)...")
                 ld.update_live_stats_db()
+                logger.info(
+                    f"Trading hours: Running database update (add_orders_to_db)...")
+                try:
+                    add_orders_to_db()
+                except Exception as e:
+                    logger.error(f"Error in add_orders_to_db: {e}")
             else:
                 logger.info(
                     f"Skipping database update: Current time ({now_est.strftime('%Y-%m-%d %H:%M:%S %Z')}) is outside regular trading hours (Mon-Fri 9:30 AM - 4:00 PM EST).")
@@ -127,6 +134,12 @@ def chart_log_data():
 @app.get('/live/status')
 def chart_status():
     return ld.chart_status()
+
+
+@app.get('/live/orders')
+def get_live_orders(limit: int = 50):
+    from qc.order_data import get_orders_from_db
+    return get_orders_from_db(limit=limit)
 
 
 # -------- CSTE/CMTE Updates ----------

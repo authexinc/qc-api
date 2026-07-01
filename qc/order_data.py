@@ -172,6 +172,29 @@ def add_orders_to_db() -> int:
     return process_and_save_orders(orders, algo_id)
 
 
+def get_orders_from_db(limit: int = 50) -> list[dict]:
+    """
+    Retrieves the most recent order records from the database.
+    """
+    session = Session()
+    try:
+        rows = session.execute(
+            select(Order).order_by(Order.time.desc()).limit(limit)
+        ).scalars().all()
+        result = []
+        for row in rows:
+            d = {col.name: getattr(row, col.name)
+                 for col in Order.__table__.columns}
+            if d.get('time'):
+                d['time'] = d['time'].isoformat()
+            if d.get('datetime'):
+                d['datetime'] = d['datetime'].isoformat()
+            result.append(d)
+        return result
+    finally:
+        session.close()
+
+
 if __name__ == "__main__":
     # Ensure DB tables are created
     from db.model import Base, engine

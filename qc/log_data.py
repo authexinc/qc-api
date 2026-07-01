@@ -14,6 +14,10 @@ from sqlalchemy import select
 load_dotenv()
 path = '.env'
 
+# Tracks the last log line index successfully fetched; used by add_to_db()
+# to incrementally fetch only new lines instead of re-fetching a fixed window.
+_last_log_line: int = 0
+
 
 def clean_stat_float(val):
     if val is None:
@@ -71,7 +75,7 @@ def safe_str(val):
     return val_str
 
 
-def get_log(algo_id: str = None, limit: int = 200) -> dict:
+def get_log(algo_id: str = None, limit: int = 200, start_line: int = None) -> dict:
 
     def get_deploy_id() -> str:
         if algo_id:
@@ -87,6 +91,7 @@ def get_log(algo_id: str = None, limit: int = 200) -> dict:
         result = response.json()['live'][0]['deployId']
         
         set_key(path, 'ALGO_ID', result)
+        os.environ['ALGO_ID'] = result
             
         return result
     
@@ -108,14 +113,20 @@ def get_log(algo_id: str = None, limit: int = 200) -> dict:
     init_content = init_request(0, 1)
     if not init_content.get('success'):
         logging.error(f"Failed to query QuantConnect API for logs: {init_content.get('errors')}")
-        return {"logs": []}
+        return {"logs": [], "length": 0}
 
     int_len = int(init_content.get('length', 0))
-    start_index = max(0, int_len - limit) if limit is not None else 0
+
+    # If start_line is provided (incremental mode), fetch from there.
+    # Otherwise fall back to the tail-limit window.
+    if start_line is not None:
+        fetch_from = max(0, start_line)
+    else:
+        fetch_from = max(0, int_len - limit) if limit is not None else 0
 
     # 2. Paginate requests in chunks of 250 (QC API limit)
     logs = []
-    current_start = start_index
+    current_start = fetch_from
     while current_start < int_len:
         current_end = min(current_start + 250, int_len)
         if current_end <= current_start:
@@ -127,14 +138,15 @@ def get_log(algo_id: str = None, limit: int = 200) -> dict:
         logs.extend(chunk.get('logs', []))
         current_start = current_end
 
-    return {"logs": logs}
+    return {"logs": logs, "length": int_len}
 
     # # Log length = 800, get the last 200, endLine - 200 = startline
     # # Then we have the startline and end line to make the request for the last 200 logs
 
 
-def parse_data(algo_id: str = None, limit: int = 200) -> list:
-    logs = get_log(algo_id=algo_id, limit=limit)["logs"]
+def parse_data(algo_id: str = None, limit: int = 200, start_line: int = None) -> list:
+    result = get_log(algo_id=algo_id, limit=limit, start_line=start_line)
+    logs = result["logs"]
     log_list = []
 
     for log_str in logs:
@@ -154,7 +166,7 @@ def parse_data(algo_id: str = None, limit: int = 200) -> list:
             'low': log.get('low'),
             'close': log.get('close'),
             'volume': log.get('volume'),
-            'ema_1min_6': log.get("ema_1min_60") or log.get("ema_1min_6"),
+            'ema_1min_6': log.get("ema_1min_6"),
             "ema_1min_60": log.get('ema_1min_60'),
             'ema_2min_60': log.get('ema_2min_60'),
             'ema_3min_80': log.get('ema_3min_80'),
@@ -183,7 +195,7 @@ def parse_data(algo_id: str = None, limit: int = 200) -> list:
             'current_state': log.get('current_state')
         })
 
-    return log_list
+    return log_list, result["length"]
 
 # def parse_data() -> list:
 #     # logs = get_log()['logs'].split("#")
@@ -250,9 +262,16 @@ def parse_data(algo_id: str = None, limit: int = 200) -> list:
 def add_to_db(algo_id: str = None, limit: int = 200):
     '''
     Map all values to appropriate cols in the db.
+    Uses incremental fetching: on the first call it fetches the last `limit` lines
+    as a seed, then subsequent calls fetch only newly added lines since the last
+    successful fetch, so no bars are ever missed regardless of log growth.
     '''
-    parsed = parse_data(algo_id=algo_id, limit=limit)
+    global _last_log_line
+    parsed, new_length = parse_data(algo_id=algo_id, limit=limit, start_line=_last_log_line if _last_log_line > 0 else None)
     if not parsed:
+        # Still advance the cursor so we don't re-scan old lines next time
+        if new_length > _last_log_line:
+            _last_log_line = new_length
         logging.info("No new log data to add to database.")
         return
 
@@ -309,7 +328,13 @@ def add_to_db(algo_id: str = None, limit: int = 200):
 
         )
 
+    # Advance cursor to the current end of the log so next run only fetches new lines
+    if new_length > _last_log_line:
+        _last_log_line = new_length
+        logging.info(f"Advanced log cursor to line {_last_log_line}")
+
     # Need a table for state information and link by timestamp
+
 
 
 def chart_log_data() -> list[dict]:

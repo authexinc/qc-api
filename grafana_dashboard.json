@@ -132,6 +132,58 @@
           }
         ]
       }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 4,
+      "title": "Orders",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time AS \"Time\",\n  order_id AS \"Order ID\",\n  symbol AS \"Symbol\",\n  price AS \"Price\",\n  algo_id AS \"Algo ID\"\nFROM orders\nWHERE algo_id = (SELECT algo_id FROM orders ORDER BY time DESC LIMIT 1)\nORDER BY time DESC",
+          "refId": "A"
+        }
+      ],
+      "transformations": []
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 5,
+      "title": "Live Stats",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_POSTGRESQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  datetime AS \"Time\",\n  equity AS \"Equity ($)\",\n  holdings AS \"Holdings ($)\",\n  net_profit AS \"Net Profit ($)\",\n  return_pct AS \"Return (%)\",\n  unrealized AS \"Unrealized ($)\",\n  volume AS \"Volume ($)\",\n  fees AS \"Fees ($)\"\nFROM live_stats\nORDER BY datetime DESC\nLIMIT 50",
+          "refId": "A"
+        }
+      ],
+      "transformations": []
     }
   ],
   "refresh": "5s",

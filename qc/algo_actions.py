@@ -9,7 +9,6 @@ path = '.env'
 
 class LiveUpdate():
     def __init__(self):
-        self.deploy_id = os.getenv('DEPLOY_ID') or os.getenv('ALGO_ID')
         self.project_id = os.getenv("PROJECT_ID")
         self.base_url = os.getenv('BASE_URL')
         self.node_id = None
@@ -18,6 +17,10 @@ class LiveUpdate():
         self.ib_username = os.getenv('IBKR_USER_NAME')
         self.ib_account = os.getenv('IB_ACC_ID')
         self.ib_password = os.getenv('IB_PASSWORD')
+
+    @property
+    def deploy_id(self):
+        return os.getenv('DEPLOY_ID') or os.getenv('ALGO_ID')
 
     def read_stats(self) -> str:
         payload = {
@@ -117,7 +120,9 @@ class LiveUpdate():
         result = response.json()
         
         def get_algo_id():
-            set_key(path, 'ALGO_ID', result['live']['deployId'])
+            deploy_id = result['live']['deployId']
+            set_key(path, 'ALGO_ID', deploy_id)
+            os.environ['ALGO_ID'] = deploy_id
 
         # log_result = json.dumps(result, indent=2)
 
@@ -148,10 +153,10 @@ class LiveUpdate():
 
     def liquidate(self):
         payload = {
-            'projecId': self.project_id
+            'projectId': self.project_id
         }
 
-        response = post(f"{self.base_url}",
+        response = post(f"{self.base_url}/live/update/liquidate",
                         headers=qc.get_headers(), json=payload)
         result = response.json()
         # print(json.dump(result, indent=2))

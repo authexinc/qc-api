@@ -40,7 +40,7 @@ A production-ready FastAPI service that bridges a live QuantConnect trading algo
 1. **Live Log Fetching & Parsing:** Pulls live QuantConnect execution logs, parsing complex trading status parameters, indicator calculations, and OHLCV bars in real-time.
 2. **Robust Storage:** Persists parsed bars into a native PostgreSQL instance with dual-table synchronization (`chart_values` for OHLCV & EMAs, `algo_state` for algorithm metadata) linked by datetime.
 3. **Headless Google Sheets Integration:** Updates Google Sheets parameters (`MTE`/`STE` overrides) via `gspread` utilizing **lazy loading** to guarantee server startup success even if Google credentials are not yet initialized.
-4. **US Trading Hours Background Scheduler:** Integrates an automatic, time-aligned background scheduler thread inside FastAPI that executes every minute **only** during regular US stock market trading hours (Monday-Friday, 9:30 AM to 4:00 PM EST/EDT).
+4. **US Trading Hours Background Scheduler:** Integrates an automatic, time-aligned background scheduler thread inside FastAPI that executes every minute during US stock market trading hours (Monday-Friday, 9:30 AM to 4:15 PM EST/EDT to catch buffered end-of-day logs).
 5. **CORS-Enabled REST Controller:** Exposes secure control endpoints allowing external dashboards (like Grafana Cloud in the browser) to invoke start, stop, and liquidate operations.
 6. **Grafana Cloud PDC Secure Tunnel:** Integrates with Grafana Private Data Source Connect (PDC) to securely expose the local PostgreSQL database to the cloud without opening external firewall ports.
 
@@ -54,6 +54,7 @@ A production-ready FastAPI service that bridges a live QuantConnect trading algo
 | `GET` | `/live/parse` | Returns live parsed logs (datetime, values, status dicts) |
 | `GET` | `/live/chart` | Queries and returns all database OHLCV rows formatted as TradingView Unix JSON |
 | `GET` | `/live/status` | Queries and returns recent algorithm metadata status as ISO-timestamped JSON |
+| `GET` | `/live/orders` | Queries and returns the most recent order records from the database |
 | `POST` | `/live/actions/update/mte/{mte}` | Triggers a Google Sheet cell update to override the MTE parameter |
 | `POST` | `/live/actions/clear/mte` | Clears the Google Sheet MTE override parameter |
 | `POST` | `/live/actions/update/ste/{ste}` | Triggers a Google Sheet cell update to override the STE parameter |
@@ -81,7 +82,7 @@ qc-api/
 ├── append_file/
 │   └── append.py               # Google Sheets credentials & lazy gspread sheet updater
 └── db/
-    ├── model.py                # SQLAlchemy DB schema models (ChartData & AlgoState)
+    ├── model.py                # SQLAlchemy DB schema models (ChartData, AlgoState, LiveStats & Order)
     └── update_row.py           # DB insert / update helper functions
 ```
 
